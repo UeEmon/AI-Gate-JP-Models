@@ -1,0 +1,25 @@
+name: Validate model packages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -d models ]; then
+            for directory in models/*/*; do
+              [ -d "$directory" ] || continue
+              python scripts/validate_model_package.py "$directory"
+            done
+          fi
