@@ -1,25 +1,27 @@
 name: Validate model packages
-
 on:
   push:
     branches: [main]
   pull_request:
-
+permissions:
+  contents: read
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Validate packages
-        shell: bash
+      - name: Validate every model version
         run: |
-          set -euo pipefail
-          if [ -d models ]; then
-            for directory in models/*/*; do
-              [ -d "$directory" ] || continue
-              python scripts/validate_model_package.py "$directory"
-            done
-          fi
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, 'scripts')
+          from validate_model_package import validate
+          for manifest in sorted(Path('models').rglob('manifest.json')):
+              print(validate(manifest.parent))
+          PY
